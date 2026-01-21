@@ -1,3 +1,7 @@
+// =============================================================
+// CONFIGURAÇÕES GERAIS
+// =============================================================
+
 // Detecta se é localhost ou produção (para a API)
 const IS_LOCALHOST = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 const API_BASE = IS_LOCALHOST 
@@ -9,28 +13,32 @@ let lojaConfig = null;
 let produtos = [];
 let carrinho = [];
 
-// 1. Descobrir qual loja carregar
-// O usuário acessa: site.com/loja/?loja=minha-loja-top
-const urlParams = new URLSearchParams(window.location.search);
-const slugLoja = urlParams.get('loja'); // Pega "minha-loja-top"
-
-// Inicialização
+// =============================================================
+// INICIALIZAÇÃO
+// =============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    if (!slugLoja) {
-        document.body.innerHTML = "<h1 style='text-align:center; margin-top:50px'>Loja não encontrada na URL.<br><small>Use: ?loja=slug-da-loja</small></h1>";
-        return;
-    }
     carregarLoja();
 });
 
-// 2. Busca dados da Loja e Produtos
 async function carregarLoja() {
     try {
-        // Busca Configuração da Loja (Rota pública que precisamos criar/verificar)
-        // Nota: Vamos usar a rota de produtos que já deve trazer dados da loja ou fazer uma específica
-        // Para simplificar, vamos assumir que a rota de vitrine traz tudo
+        // LÓGICA DE IDENTIFICAÇÃO INTELIGENTE 🧠
         
-        const res = await fetch(`${API_BASE}/loja/vitrine/${slugLoja}`);
+        // 1. Tenta pegar o parametro ?loja=... (Prioridade para testes ou links diretos)
+        const urlParams = new URLSearchParams(window.location.search);
+        const slugParam = urlParams.get('loja');
+        
+        // 2. Tenta pegar o domínio atual (ex: michaelcdutra.github.io ou paulosotre.com.br)
+        const dominioAtual = window.location.hostname;
+
+        // Decisão: Se tem slug na URL, usa o slug. Se não, usa o domínio.
+        const identificador = slugParam ? slugParam : dominioAtual;
+
+        console.log("Enviando identificador para API:", identificador);
+
+        // Chama a rota inteligente que busca por Slug OU Domínio
+        const res = await fetch(`${API_BASE}/loja/vitrine/dados?host=${identificador}`);
+        
         if (!res.ok) throw new Error("Loja não encontrada");
 
         const dados = await res.json();
@@ -42,15 +50,22 @@ async function carregarLoja() {
 
     } catch (err) {
         console.error(err);
-        document.getElementById('loading').innerHTML = `
-            <div style="color:red">
-                <i class="fas fa-store-slash"></i><br>
-                Não conseguimos carregar a loja <strong>"${slugLoja}"</strong>.
+        document.body.innerHTML = `
+            <div style="text-align:center; padding:50px; font-family:sans-serif;">
+                <h1>Ops! Loja não encontrada.</h1>
+                <p>Tentamos acessar via: <strong>${window.location.hostname}</strong></p>
+                <p>Verifique se o domínio foi cadastrado corretamente no painel Admin.</p>
+                <br>
+                <small style="color:gray">Erro técnico: ${err.message}</small>
             </div>`;
     }
 }
 
-// 3. Aplica Cor e Logo
+// =============================================================
+// FUNÇÕES DE UI (Visual)
+// =============================================================
+
+// 1. Aplica Cor e Logo
 function aplicarIdentidadeVisual() {
     document.title = lojaConfig.nomeLoja;
     document.getElementById('store-name').innerText = lojaConfig.nomeLoja;
@@ -59,13 +74,15 @@ function aplicarIdentidadeVisual() {
     document.documentElement.style.setProperty('--primary', lojaConfig.corPrimaria || '#000');
     
     if (lojaConfig.logoUrl) {
-        document.getElementById('store-logo').src = lojaConfig.logoUrl;
+        const logo = document.getElementById('store-logo');
+        logo.src = lojaConfig.logoUrl;
+        logo.style.display = 'block';
     } else {
         document.getElementById('store-logo').style.display = 'none';
     }
 }
 
-// 4. Renderiza Produtos na Tela
+// 2. Renderiza Produtos na Tela
 function renderizarProdutos() {
     const grid = document.getElementById('products-grid');
     document.getElementById('loading').style.display = 'none';
@@ -76,9 +93,7 @@ function renderizarProdutos() {
     }
 
     grid.innerHTML = produtos.map(p => {
-        // Se tiver variações, pega o menor preço ou padrão
         const imagem = p.image || 'https://via.placeholder.com/300?text=Sem+Foto';
-        
         // JSON Seguro para passar na função onclick
         const prodString = JSON.stringify(p).replace(/"/g, "&quot;");
 
@@ -99,7 +114,10 @@ function renderizarProdutos() {
     }).join('');
 }
 
-// 5. Lógica do Carrinho
+// =============================================================
+// LÓGICA DO CARRINHO
+// =============================================================
+
 function toggleCart() {
     document.getElementById('cart-modal').classList.toggle('open');
 }
@@ -117,7 +135,6 @@ function adicionarAoCarrinho(produto) {
             preco: parseFloat(produto.preco),
             img: produto.image,
             qtd: 1,
-            // Se tiver variação, teria que abrir modal de escolha, vamos simplificar:
             variacao: produto.variacoes && produto.variacoes.length > 0 ? produto.variacoes[0].tamanho : 'Único' 
         });
     }
@@ -125,11 +142,14 @@ function adicionarAoCarrinho(produto) {
     atualizarCarrinhoUI();
     toggleCart(); // Abre o carrinho automaticamente
     
-    Toastify({
-        text: "Produto adicionado!",
-        duration: 2000,
-        style: { background: lojaConfig.corPrimaria || "#000" }
-    }).showToast();
+    // Notificação Toastify
+    if(typeof Toastify === 'function'){
+        Toastify({
+            text: "Produto adicionado!",
+            duration: 2000,
+            style: { background: lojaConfig.corPrimaria || "#000" }
+        }).showToast();
+    }
 }
 
 function removerItem(id) {
@@ -185,7 +205,10 @@ function atualizarCarrinhoUI() {
     `).join('');
 }
 
-// 6. Finalizar no WhatsApp
+// =============================================================
+// CHECKOUT WHATSAPP
+// =============================================================
+
 function finalizarCompraWhatsApp() {
     if (carrinho.length === 0) return alert("Seu carrinho está vazio!");
     
