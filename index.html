@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carregando Loja...</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+</head>
+<body>
+
+    <header id="main-header">
+        <div class="container header-content">
+            <div class="brand">
+                <img id="store-logo" src="https://via.placeholder.com/50" alt="Logo">
+                <h1 id="store-name">Nome da Loja</h1>
+            </div>
+            <div class="cart-icon" onclick="toggleCart()">
+                <i class="fas fa-shopping-bag"></i>
+                <span id="cart-count">0</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="hero">
+        <div class="container">
+            <h2>Confira nossas novidades</h2>
+            <p>Os melhores looks selecionados para você.</p>
+        </div>
+    </div>
+
+    <main class="container">
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner fa-spin"></i> Carregando produtos...
+        </div>
+        
+        <div id="products-grid" class="products-grid">
+            </div>
+    </main>
+
+    <div id="cart-modal" class="cart-overlay">
+        <div class="cart-sidebar">
+            <div class="cart-header">
+                <h3>Seu Carrinho</h3>
+                <button onclick="toggleCart()" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div id="cart-items" class="cart-items">
+                <div class="empty-cart">Seu carrinho está vazio :(</div>
+            </div>
+
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <strong id="cart-total-price">R$ 0,00</strong>
+                </div>
+                <div class="checkout-form">
+                    <input type="text" id="cliente-nome" placeholder="Seu Nome">
+                    <button onclick="finalizarCompraWhatsApp()" id="btn-checkout" class="btn-whatsapp">
+                        <i class="fab fa-whatsapp"></i> Finalizar Pedido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="loja.js"></script>
+</body>
+</html>
