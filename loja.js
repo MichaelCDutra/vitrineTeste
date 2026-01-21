@@ -209,28 +209,76 @@ function atualizarCarrinhoUI() {
 // CHECKOUT WHATSAPP
 // =============================================================
 
-function finalizarCompraWhatsApp() {
+async function finalizarCompraWhatsApp() {
     if (carrinho.length === 0) return alert("Seu carrinho está vazio!");
     
     const nome = document.getElementById('cliente-nome').value;
-    if (!nome) return alert("Por favor, digite seu nome.");
+    const zapCliente = document.getElementById('cliente-zap').value; // Novo campo
 
-    if (!lojaConfig.whatsapp) return alert("Esta loja não configurou um WhatsApp para vendas.");
+    if (!nome || !zapCliente) return alert("Por favor, preencha seu nome e WhatsApp.");
 
-    // Monta a mensagem
-    let msg = `*NOVO PEDIDO - ${lojaConfig.nomeLoja}*\n`;
-    msg += `👤 Cliente: ${nome}\n\n`;
-    msg += `*Itens do Pedido:*\n`;
+    // Trava o botão para evitar duplo clique
+    const btn = document.getElementById('btn-checkout');
+    const textoOriginal = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+    btn.disabled = true;
 
-    carrinho.forEach(item => {
-        msg += `▪ ${item.qtd}x ${item.titulo} (${item.variacao}) - R$ ${(item.preco * item.qtd).toFixed(2)}\n`;
-    });
+    try {
+        // 1. Prepara os dados para a API
+        const payload = {
+            // Usa o identificador que já descobrimos ao carregar a loja
+            slug: new URLSearchParams(window.location.search).get('loja') || window.location.hostname,
+            clienteNome: nome,
+            clienteWhatsapp: zapCliente,
+            itens: carrinho.map(item => ({
+                produtoId: item.id,
+                quantidade: item.qtd,
+                tamanho: item.variacao
+            }))
+        };
 
-    const total = carrinho.reduce((acc, item) => acc + (item.preco * item.qtd), 0);
-    msg += `\n*TOTAL: R$ ${total.toFixed(2)}*`;
-    msg += `\n\nAguardo confirmação!`;
+        // 2. Envia para o Backend salvar (Desconta estoque e cria pedido)
+        const res = await fetch(`${API_BASE}/loja/checkout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-    // Cria o link e abre
-    const link = `https://wa.me/${lojaConfig.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
-    window.open(link, '_blank');
+        if (!res.ok) {
+            const erro = await res.json();
+            throw new Error(erro.error || "Erro ao processar pedido.");
+        }
+
+        const data = await res.json(); // Sucesso! Recebemos o ID do pedido
+
+        // 3. Monta a mensagem do WhatsApp (Agora com número do pedido!)
+        let msg = `*NOVO PEDIDO #${data.pedidoId} - ${lojaConfig.nomeLoja}*\n`;
+        msg += `👤 Cliente: ${nome}\n`;
+        msg += `📱 Contato: ${zapCliente}\n\n`;
+        msg += `*Resumo da Compra:*\n`;
+
+        carrinho.forEach(item => {
+            msg += `▪ ${item.qtd}x ${item.titulo} (${item.variacao}) - R$ ${(item.preco * item.qtd).toFixed(2)}\n`;
+        });
+
+        msg += `\n*TOTAL: R$ ${data.total.toFixed(2)}*`;
+        msg += `\n\nAguardo confirmação e chave Pix!`;
+
+        // 4. Limpa o carrinho local
+        carrinho = [];
+        atualizarCarrinhoUI();
+        toggleCart(); // Fecha modal
+        alert("Pedido realizado com sucesso! Vamos te redirecionar para o WhatsApp.");
+
+        // 5. Abre o WhatsApp
+        const link = `https://wa.me/${lojaConfig.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
+        window.open(link, '_blank');
+
+    } catch (err) {
+        console.error(err);
+        alert("Ops: " + err.message);
+    } finally {
+        btn.innerHTML = textoOriginal;
+        btn.disabled = false;
+    }
 }

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
+
 <body>
 
     <header id="main-header">
@@ -35,9 +37,9 @@
         <div id="loading" class="loading">
             <i class="fas fa-spinner fa-spin"></i> Carregando produtos...
         </div>
-        
+
         <div id="products-grid" class="products-grid">
-            </div>
+        </div>
     </main>
 
     <div id="cart-modal" class="cart-overlay">
@@ -46,7 +48,7 @@
                 <h3>Seu Carrinho</h3>
                 <button onclick="toggleCart()" class="close-btn"><i class="fas fa-times"></i></button>
             </div>
-            
+
             <div id="cart-items" class="cart-items">
                 <div class="empty-cart">Seu carrinho está vazio :(</div>
             </div>
@@ -57,7 +59,9 @@
                     <strong id="cart-total-price">R$ 0,00</strong>
                 </div>
                 <div class="checkout-form">
-                    <input type="text" id="cliente-nome" placeholder="Seu Nome">
+                    <input type="text" id="cliente-nome" placeholder="Seu Nome (Ex: João)">
+                    <input type="text" id="cliente-zap" placeholder="Seu WhatsApp (Ex: 11999999999)">
+
                     <button onclick="finalizarCompraWhatsApp()" id="btn-checkout" class="btn-whatsapp">
                         <i class="fab fa-whatsapp"></i> Finalizar Pedido
                     </button>
@@ -69,4 +73,5 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script src="loja.js"></script>
 </body>
+
 </html>
