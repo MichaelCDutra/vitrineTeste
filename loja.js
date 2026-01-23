@@ -261,7 +261,7 @@ async function finalizarCompraWhatsApp() {
             msg += `▪ ${item.qtd}x ${item.titulo} (${item.variacao}) - R$ ${(item.preco * item.qtd).toFixed(2)}\n`;
         });
 
-        msg += `\n*TOTAL: R$ ${data.total.toFixed(2)}*`;
+        msg += `\n*TOTAL: R$ ${Number(data.total)   .toFixed(2)}*`;
         msg += `\n\nAguardo confirmação e chave Pix!`;
 
         // 4. Limpa o carrinho local
